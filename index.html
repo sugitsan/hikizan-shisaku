@@ -138,6 +138,7 @@
                 b.classList.add("correct");
               }
             });
+            questionElement.textContent = `10 － ${b} ＝ ${correctAnswer}`;
             feedbackElement.textContent = `ざんねん、せいかいは ${correctAnswer} です。`;
             setTimeout(() => nextQuestion(), 3000);
           }
