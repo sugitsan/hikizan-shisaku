@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ひきざんクイズ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 2em;
+    }
+    h1 {
+      font-size: 2em;
+    }
+    #question {
+      font-size: 3em;
+      margin: 1em 0;
+    }
+    .options button {
+      font-size: 2em;
+      margin: 0.5em;
+      padding: 0.5em 1em;
+      background-color: white;
+      border: 2px solid #555;
+      cursor: pointer;
+    }
+    .options button.correct {
+      background-color: #b8f5b1 !important;
+    }
+    .options button.wrong {
+      background-color: #f9c0c0 !important;
+    }
+    #visual-aid-container {
+      text-align: center;
+      margin: 1em auto;
+    }
+    #visual-aid {
+      text-align: left;
+      font-size: 2em;
+      display: inline-block;
+    }
+    #feedback {
+      font-size: 1.5em;
+      margin-top: 1em;
+    }
+    #progress-bar {
+      width: 100%;
+      background-color: #ddd;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1em;
+    }
+    #progress {
+      height: 100%;
+      width: 0%;
+      background-color: #4caf50;
+      transition: width 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <h1>ひきざんクイズ</h1>
+  <div id="progress-bar">
+    <div id="progress"></div>
+  </div>
+  <div id="question"></div>
+  <div id="visual-aid-container"><div id="visual-aid"></div></div>
+  <div class="options"></div>
+  <div id="feedback"></div>
+
+  <audio id="correct-sound" src="correct.mp3" preload="auto"></audio>
+
+  <script>
+    const questionElement = document.getElementById("question");
+    const optionsContainer = document.querySelector(".options");
+    const feedbackElement = document.getElementById("feedback");
+    const progressElement = document.getElementById("progress");
+    const visualAidElement = document.getElementById("visual-aid");
+    const correctSound = document.getElementById("correct-sound");
+
+    let currentQuestion = 0;
+    let score = 0;
+    let startTime;
+
+    const totalQuestions = 10;
+
+    function playSound() {
+      correctSound.currentTime = 0;
+      correctSound.play();
+    }
+
+    function generateQuestion() {
+      const b = Math.floor(Math.random() * 9) + 1;
+      const correctAnswer = 10 - b;
+      const answers = new Set([correctAnswer]);
+      while (answers.size < 4) {
+        const wrong = Math.floor(Math.random() * 10);
+        if (wrong !== correctAnswer) answers.add(wrong);
+      }
+
+      const shuffled = Array.from(answers).sort(() => Math.random() - 0.5);
+
+      questionElement.textContent = `10 － ${b} ＝ ?`;
+
+      let visual = "";
+      for (let i = 0; i < 10; i++) {
+        visual += i < (10 - b) ? "●" : "×";
+        if ((i + 1) % 5 === 0) visual += " ";
+      }
+      visualAidElement.innerHTML = `10　${visual}`;
+
+      optionsContainer.innerHTML = "";
+      feedbackElement.textContent = "";
+
+      shuffled.forEach((num) => {
+        const btn = document.createElement("button");
+        btn.textContent = num;
+        btn.addEventListener("click", () => {
+          const isCorrect = num === correctAnswer;
+          if (isCorrect) {
+            btn.classList.add("correct");
+            playSound();
+            feedbackElement.textContent = "せいかい！";
+            score++;
+            setTimeout(() => nextQuestion(), 500);
+          } else {
+            btn.classList.add("wrong");
+            [...optionsContainer.children].forEach((b) => {
+              if (parseInt(b.textContent) === correctAnswer) {
+                b.classList.add("correct");
+              }
+            });
+            feedbackElement.textContent = `ざんねん、せいかいは ${correctAnswer} です。`;
+            setTimeout(() => nextQuestion(), 3000);
+          }
+        });
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      updateProgress()
