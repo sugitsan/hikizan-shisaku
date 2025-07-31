@@ -39,6 +39,7 @@
       text-align: left;
       font-size: 2em;
       display: inline-block;
+      white-space: pre-wrap;
     }
     #feedback {
       font-size: 1.5em;
@@ -70,6 +71,7 @@
   <div class="options"></div>
   <div id="feedback"></div>
 
+  <!-- 正解音が不要なら、下の audio は削除OK -->
   <audio id="correct-sound" src="correct.mp3" preload="auto"></audio>
 
   <script>
@@ -87,13 +89,16 @@
     const totalQuestions = 10;
 
     function playSound() {
-      correctSound.currentTime = 0;
-      correctSound.play();
+      if (correctSound) {
+        correctSound.currentTime = 0;
+        correctSound.play();
+      }
     }
 
     function generateQuestion() {
       const b = Math.floor(Math.random() * 9) + 1;
       const correctAnswer = 10 - b;
+
       const answers = new Set([correctAnswer]);
       while (answers.size < 4) {
         const wrong = Math.floor(Math.random() * 10);
@@ -104,9 +109,10 @@
 
       questionElement.textContent = `10 － ${b} ＝ ?`;
 
+      // ●×で視覚的に表示
       let visual = "";
       for (let i = 0; i < 10; i++) {
-        visual += i < (10 - b) ? "●" : "×";
+        visual += i < correctAnswer ? "●" : "×";
         if ((i + 1) % 5 === 0) visual += " ";
       }
       visualAidElement.innerHTML = `10　${visual}`;
@@ -142,4 +148,37 @@
 
     function nextQuestion() {
       currentQuestion++;
-      updateProgress()
+      updateProgress();
+      if (currentQuestion < totalQuestions) {
+        generateQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function updateProgress() {
+      const percent = Math.round((currentQuestion / totalQuestions) * 100);
+      progressElement.style.width = percent + "%";
+    }
+
+    function showResult() {
+      const timeTaken = Math.round((Date.now() - startTime) / 1000);
+      questionElement.textContent = "";
+      optionsContainer.innerHTML = "";
+      visualAidElement.innerHTML = "";
+      feedbackElement.innerHTML = `せいかいすう：${score} / ${totalQuestions}<br>かかったじかん・・・${timeTaken}びょう`;
+    }
+
+    function startQuiz() {
+      score = 0;
+      currentQuestion = 0;
+      startTime = Date.now();
+      updateProgress();
+      generateQuestion();
+    }
+
+    // ページ読み込み後に開始
+    window.addEventListener("DOMContentLoaded", startQuiz);
+  </script>
+</body>
+</html>
